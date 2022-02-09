@@ -101,6 +101,7 @@ namespace MongoDBTest
 
                     var Session_docs = Coll_SessionInfo.Find(Sessionfilter).ToList();
                     
+
                     foreach (BsonDocument Summry_doc in Session_docs)
                     {
 
