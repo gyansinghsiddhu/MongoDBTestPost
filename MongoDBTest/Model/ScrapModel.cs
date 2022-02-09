@@ -89,6 +89,7 @@ namespace MongoDBTest.Model
         public int SoldOutTime { get; set; }
         public int FSTotalSold { get; set; }
         public int PostArrCount { get; set; }
+       
 
 
 

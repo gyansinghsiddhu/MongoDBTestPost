@@ -89,12 +89,16 @@ namespace MongoDBTest
                 try
                 {
 
-                   // string search = "220120";
+                    //string search = "220117";
                     var builder = Builders<BsonDocument>.Filter;
 
-                    //var Sessionfilter = builder.Eq("sql_status", 1) & builder.Gt("post_scrap_count", 0) & builder.Regex("scrap_name", "^" + search + ".*");
-                    
-                    var Sessionfilter = builder.Eq("sql_status", 0) & builder.Gt("post_scrap_count", 0);
+                    // var Sessionfilter = builder.Eq("sql_status", 2) & builder.Gt("post_scrap_count", 0) & builder.Regex("scrap_name", "^" + search + ".*");
+
+                    // var Sessionfilter = builder.Eq("sql_status", 1); //& builder.Gt("post_scrap_count", 0);
+
+                     var Sessionfilter = builder.Eq("sql_status", 0)  & builder.Gt("post_scrap_count", 0);  // & builder.Gt("scrap_name", "220127_0000")
+
+
                     var Session_docs = Coll_SessionInfo.Find(Sessionfilter).ToList();
                     
                     foreach (BsonDocument Summry_doc in Session_docs)
@@ -108,19 +112,34 @@ namespace MongoDBTest
                         sModel.PostArrCount = Summry_doc["post_scrap_slots"].AsBsonArray.Count;
 
 
+                        // UPDATE SQL STATUS 0 to 1 when 0 Post SLOT is added into Promotion Collection 
+                        #region
+
+                        //if(sModel.Slot > 0)
+                        //{
+                        //       var SessionProIdfilter = builder.Eq("promotionid", Convert.ToInt64(sModel.PromotionId));
+                        //       var updateSesionSqlStatus = Builders<BsonDocument>.Update.Set("sql_status", 1);
+                        //       var result2 = Coll_SessionInfo.UpdateOne(SessionProIdfilter, updateSesionSqlStatus);
+                        //}
+
+                        #endregion
+
                         for (; ; )
                         {
                             sModel.PostArrCount = GetArrCount(sModel.PromotionId).Item2;
                             if (sModel.PostArrCount <= sModel.Slot && sModel.PostArrCount >0)
                             {
+
                                 #region
-                                for (int slot = 1; slot <= sModel.Slot; slot++)
+                                for (int slot = 0; slot <= sModel.Slot; slot++)
                                 {
 
                                     builder = Builders<BsonDocument>.Filter;
-                                    var PostScrapfilter = builder.Eq("promotionid", Convert.ToDouble(sModel.PromotionId)) & builder.Eq("sql_status", 0) & builder.Eq("slot", slot);
-                                    // var PostScrapfilter = builder.Eq("itemid", 4636236578) & builder.Eq("promotionid", Convert.ToDouble(sModel.PromotionId)) & builder.Eq("slot", slot);
+                                    //var PostScrapfilter = builder.Eq("promotionid", Convert.ToDouble(sModel.PromotionId))  & builder.Eq("slot", slot) & builder.Eq("is_fs_eligible",true);
+                                    var PostScrapfilter = builder.Eq("promotionid", Convert.ToDouble(sModel.PromotionId)) & builder.Eq("sql_status", 0) & builder.Eq("slot", slot) & builder.Eq("is_fs_eligible",true);
+                                   // var PostScrapfilter = builder.Eq("promotionid", Convert.ToDouble(sModel.PromotionId)) & builder.Eq("slot", slot) ;
                                     var Post_docs = Coll_SkuPost.Find(PostScrapfilter).ToList();
+                                    
                                     //   SET ALL VALUE zero or Blank for SKU TABLE 
                                     if (Post_docs.Count == 0) continue;
                                     sModel.ShopID = ""; sModel.ItemID = "";
@@ -141,7 +160,14 @@ namespace MongoDBTest
 
                                         sModel.ShopID = Pre_doc["shopid"].ToString();
                                         sModel.ItemID = Pre_doc["itemid"].ToString();
-                                        //if (sModel.ItemID == "8873499600") break;
+
+                                        //if (sModel.ItemID == "3595263386")
+                                        //{
+                                        //    string ab = "Gyan";
+                                        //}
+                                           
+                                        //else continue;
+
                                         var Cat_Details = GetCat_FS_Stock(sModel.PromotionId, sModel.ShopID, sModel.ItemID);
                                         try { sModel.CatId = Cat_Details.Item1; } catch (Exception ex) { Console.WriteLine(ex.ToString()); } // 18
                                         try { sModel.CatName = Cat_Details.Item2; } catch (Exception ex) { Console.WriteLine(ex.ToString()); } // 18
@@ -164,7 +190,7 @@ namespace MongoDBTest
                                             try { sModel.VariationBal = Convert.ToInt32(Pre_doc["flash_sale"]["stock"]); } catch (Exception ex) { Console.WriteLine(ex.ToString()); }  //60
 
                                         }
-                                        try { sModel.FSSlotStartTime = ConvertUnixToLocal(sModel.Country, Pre_doc["updated_at"].ToString()); } catch (Exception ex) { Console.WriteLine(ex.ToString()); }  // 58  //fs_sku.price
+                                        try { sModel.FSSlotStartTime = ConvertUnixToLocal(sModel.Country, Pre_doc["created_at"].ToString()); } catch (Exception ex) { Console.WriteLine(ex.ToString()); }  // 58  //fs_sku.price
 
                                         sModel.ModelID = "";
                                         sModel.VariationName = "";
@@ -173,12 +199,13 @@ namespace MongoDBTest
                                         sModel.Variation_Allocated_Stock = 0;
                                         sModel.VariationStock = 0;
                                         sModel.VariationUnitSold = 0;
-                                        sModel.FSTotalSold = 0;
                                         sModel.VariationRevenue = 0;
                                         sModel.FSRevenue = 0;
+                                        sModel.FSTotalSold = 0;
                                         sModel.VariationAvgPrice = 0;
                                         sModel.SKUAvgPrice = 0;
 
+                          
                                         int mdlCnt = 0;
                                         // VARIATION DETAILS ...........................
                                         var allModels = Pre_doc["models"].AsBsonArray;
@@ -206,11 +233,13 @@ namespace MongoDBTest
                                             if (sModel.Variation_Allocated_Stock == 0) continue;
                                             
                                             mdlCnt++;
+                                           
                                             try { sModel.VariationPriceSlash = Convert.ToDecimal(model["price_before_discount"]) / PriceDiv; } catch (Exception ex) { Console.WriteLine(ex.ToString()); } // 40
                                             try { sModel.VariationPrice = Convert.ToDecimal(model["price"]) / PriceDiv; } catch (Exception ex) { Console.WriteLine(ex.ToString()); } // 41
                                             try { sModel.VariationUnitSold = sModel.Variation_Allocated_Stock - sModel.VariationStock; } catch (Exception ex) { Console.WriteLine(ex.ToString()); }
                                             try { sModel.FSTotalSold = sModel.FSTotalSold + sModel.VariationUnitSold; } catch (Exception ex) { Console.WriteLine(ex.ToString()); }
                                             try { sModel.VariationRevenue = sModel.VariationUnitSold * sModel.VariationPrice; } catch (Exception ex) { Console.WriteLine(ex.ToString()); }
+                                            
                                             if (sModel.FSTotalSold > 0)
                                                 try { sModel.VariationAvgPrice = sModel.VariationRevenue / sModel.FSTotalSold; } catch (Exception ex) { Console.WriteLine(ex.ToString()); }
                                             else sModel.VariationAvgPrice = 0;
@@ -232,6 +261,7 @@ namespace MongoDBTest
                                             sModel.VariationPrice = 0;
                                             sModel.VariationStock = 0;
                                             sModel.VariationUnitSold = 0;
+                                            sModel.VariationRevenue = 0;
                                             sModel.Variation_Allocated_Stock = 0;
 
                                         }
@@ -260,7 +290,7 @@ namespace MongoDBTest
                                 {
                                     // UPDATE PROMOTION STATUS 1 to 2
                                     var SessionProIdfilter = builder.Eq("promotionid", Convert.ToInt64(sModel.PromotionId));
-                                    var updateSesionSqlStatus = Builders<BsonDocument>.Update.Set("sql_status", 2);
+                                    var updateSesionSqlStatus = Builders<BsonDocument>.Update.Set("sql_status", 1);
                                     var result2 = Coll_SessionInfo.UpdateOne(SessionProIdfilter, updateSesionSqlStatus);
                                     
                                     break;

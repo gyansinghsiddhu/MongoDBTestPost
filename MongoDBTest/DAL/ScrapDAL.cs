@@ -364,8 +364,30 @@ namespace MongoDBTest.DAL
                 Comm2.Dispose();
                 tran.Commit();
                 cnn.Close();
-
                 Comm2.Parameters.Clear();
+
+
+
+                //cnn.ConnectionString = CnnStr;
+                //if (cnn.State == ConnectionState.Closed) cnn.Open();
+                //tran = cnn.BeginTransaction();
+                //Qry = "update fs_sku set fs_total_sold = (select  sum(unit_sold) as UnitSold from fs_sku_model where Promotionid = @promotionid and itemid = @itemid and slot_count = @slot_count) , fs_revenue = (select  sum(revenue) as Revenue from fs_sku_model where Promotionid = @promotionid and itemid = @itemid and slot_count = @slot_count)   where country_code = @country_code and promotionid = @promotionid and shopid = @shopid and itemid = @itemid";
+                //Comm2 = new SqlCommand(Qry, cnn);
+                //Comm2.Parameters.Add("@country_code", SqlDbType.VarChar, 3).Value = Country;
+                //Comm2.Parameters.Add("@promotionid", SqlDbType.BigInt).Value = Convert.ToInt64(PromotionId);
+                //Comm2.Parameters.Add("@itemid", SqlDbType.BigInt).Value = Convert.ToInt64(ItemID);
+                //Comm2.Parameters.Add("@shopid", SqlDbType.BigInt).Value = Convert.ToInt64(ShopID);
+                //Comm2.Parameters.Add("@slot_count", SqlDbType.Int).Value = SlotCount;
+
+                //Comm2.Transaction = tran;
+                //Comm2.CommandTimeout = 0;
+                //Comm2.ExecuteNonQuery();
+                //Comm2.Dispose();
+                //tran.Commit();
+                //cnn.Close();
+                //Comm2.Parameters.Clear();
+
+
 
             }
             catch (SqlException ex)
